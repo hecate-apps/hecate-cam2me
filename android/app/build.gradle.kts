@@ -33,6 +33,17 @@ android {
             jniLibs.srcDirs("src/main/jniLibs")
         }
     }
+
+    lint {
+        // The generated bindings (io/macula/sdk/) guard their one API-33+
+        // call (java.lang.ref.Cleaner#create) behind a runtime
+        // Class.forName/catch-ClassNotFoundException check, falling back
+        // to a JNA-based cleaner below minSdk 33 -- genuinely safe, but
+        // Lint's static NewApi check can't see through reflection-based
+        // guards and flags it as an outright violation regardless.
+        // Verified directly in the generated source, not assumed.
+        disable += "NewApi"
+    }
 }
 
 dependencies {
