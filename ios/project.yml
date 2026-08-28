@@ -1,0 +1,27 @@
+name: HecateCam2Me
+options:
+  bundleIdPrefix: social.hecate
+  deploymentTarget:
+    iOS: "17.0"
+
+targets:
+  HecateCam2Me:
+    type: application
+    platform: iOS
+    sources: HecateCam2Me
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: social.hecate.cam2me
+        SWIFT_VERSION: "5.0"
+        # Camera capture (NSCameraUsageDescription, AVFoundation) is a
+        # feature-phase addition, not part of this skeleton.
+        INFOPLIST_KEY_UILaunchScreen_Generation: true
+    dependencies:
+      # Built by ../scripts/build-rust-ios.sh (cargo build --target
+      # aarch64-apple-ios[-sim] + xcodebuild -create-xcframework). Not
+      # committed -- a build artifact, regenerated locally or in CI
+      # before this target ever compiles, same as the Kotlin side's
+      # jniLibs.
+      - framework: MaculaRustSdkFFI.xcframework
+        embed: true
+        codeSign: true

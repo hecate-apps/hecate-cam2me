@@ -1,0 +1,42 @@
+name: iOS
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  build:
+    name: build (rust-ios + xcodegen + xcodebuild)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust/macula-rust-sdk
+
+      - name: Build macula-rust-sdk-ffi for iOS + regenerate Swift bindings + XCFramework
+        run: ./scripts/build-rust-ios.sh
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate the Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Build for the simulator (no signing needed in CI)
+        working-directory: ios
+        run: |
+          xcodebuild build \
+            -project HecateCam2Me.xcodeproj \
+            -scheme HecateCam2Me \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO

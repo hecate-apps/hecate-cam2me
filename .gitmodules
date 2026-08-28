@@ -1,0 +1,3 @@
+[submodule "rust/macula-rust-sdk"]
+	path = rust/macula-rust-sdk
+	url = git@github.com:macula-io/macula-rust-sdk.git
