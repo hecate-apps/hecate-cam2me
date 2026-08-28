@@ -26,6 +26,16 @@ android {
         }
     }
 
+    // compileDebugKotlin defaults its JVM target to the JDK actually
+    // running Gradle (Temurin 21 in CI) while compileDebugJavaWithJavac
+    // defaults to 11 -- AGP fails the build outright on that mismatch
+    // rather than silently picking one. Matching both to 21 here avoids
+    // provisioning a second JDK toolchain just to reconcile them.
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+
     // Populated by ../../scripts/build-rust-android.sh, which cross-compiles
     // macula-rust-sdk-ffi via cargo-ndk and drops one libmacula_rust_sdk_ffi.so
     // per ABI here. Not committed -- build artifacts, regenerated locally or
