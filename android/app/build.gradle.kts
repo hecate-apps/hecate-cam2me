@@ -1,6 +1,8 @@
 plugins {
     id("com.android.application")
+    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -62,4 +64,19 @@ dependencies {
     // itself, not a choice made here.
     implementation("net.java.dev.jna:jna:5.17.0@aar")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+
+    // Local storage for paired contacts (node_id, display name, last
+    // known station/online state) -- structured, queryable data that
+    // will grow, unlike simple settings (station URL etc.), which will
+    // use DataStore separately when that lands.
+    implementation("androidx.room:room-runtime:2.8.4")
+    implementation("androidx.room:room-ktx:2.8.4")
+    ksp("androidx.room:room-compiler:2.8.4")
+}
+
+ksp {
+    // Keeps Room's schema-history JSON alongside the code, the
+    // documented default for exportSchema = true -- otherwise Room
+    // emits a build warning every compile.
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
