@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- macula-artwork's own "hub nodes" light tone, pairing with the dark
+         symbol mark for a light splash, matching the artwork repo's own
+         light/dark pairing convention. -->
+    <color name="splash_background">#F8FAFC</color>
+</resources>

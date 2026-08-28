@@ -65,6 +65,19 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
 
+    // lifecycleScope (presence heartbeat's coroutine scope, tied to the
+    // Activity rather than leaking past it) and collectAsStateWithLifecycle
+    // (pauses Room/DataStore Flow collection while backgrounded, instead
+    // of the plain collectAsState that keeps collecting regardless).
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
+
+    // The splash theme (res/values/themes.xml) targets Theme.SplashScreen,
+    // which only exists natively on API 31+ -- this compat library backports
+    // it down to minSdk 26 and is required for installSplashScreen() to do
+    // anything below 31.
+    implementation("androidx.core:core-splashscreen:1.2.0")
+
     // Generated Kotlin bindings (io.macula.sdk package, under
     // src/main/kotlin/io/macula/sdk/) call into the native lib above via
     // JNA, and every async method (all of them, on FfiSession/FfiStream)
@@ -75,13 +88,17 @@ dependencies {
     implementation("net.java.dev.jna:jna:5.17.0@aar")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
 
-    // Local storage for paired contacts (node_id, display name, last
-    // known station/online state) -- structured, queryable data that
-    // will grow, unlike simple settings (station URL etc.), which will
-    // use DataStore separately when that lands.
+    // Local storage for contacts and presence -- structured, queryable
+    // data that grows, unlike the handful of scalar settings below.
     implementation("androidx.room:room-runtime:2.8.4")
     implementation("androidx.room:room-ktx:2.8.4")
     ksp("androidx.room:room-compiler:2.8.4")
+
+    // A handful of scalars this device needs once and reads on every
+    // launch: the persisted identity seed, this device's own phone
+    // number, and station host/port. Room would be the wrong tool for
+    // single-row config like this.
+    implementation("androidx.datastore:datastore-preferences:1.2.1")
 }
 
 ksp {

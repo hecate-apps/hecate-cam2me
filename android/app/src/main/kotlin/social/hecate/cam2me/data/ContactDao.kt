@@ -10,6 +10,13 @@ interface ContactDao {
     @Query("SELECT * FROM contacts WHERE NOT blocked ORDER BY displayName COLLATE NOCASE")
     fun observeAll(): Flow<List<Contact>>
 
+    /** A one-shot snapshot for matching an incoming presence heartbeat's
+     * phone-number hash against every known contact -- SQLite has no
+     * SHA-256, so that comparison happens in Kotlin, over this list,
+     * rather than as a WHERE clause. */
+    @Query("SELECT * FROM contacts WHERE NOT blocked")
+    suspend fun listAll(): List<Contact>
+
     @Query("SELECT * FROM contacts WHERE phoneNumber = :phoneNumber")
     suspend fun findByPhoneNumber(phoneNumber: String): Contact?
 

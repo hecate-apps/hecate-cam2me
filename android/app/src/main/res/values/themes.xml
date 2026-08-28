@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Set as the app's launch theme in AndroidManifest.xml, per
+         core-splashscreen's documented pattern. MainActivity itself
+         calls installSplashScreen() before super.onCreate(), which reads
+         this theme and swaps to postSplashScreenTheme once ready. -->
+    <style name="Theme.Cam2Me.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/macula_symbol_dark</item>
+        <item name="postSplashScreenTheme">@style/Theme.Cam2Me</item>
+    </style>
+
+    <style name="Theme.Cam2Me" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

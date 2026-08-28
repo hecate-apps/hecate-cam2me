@@ -8,7 +8,7 @@
     <application
         android:label="Hecate Cam2Me"
         android:allowBackup="false"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        android:theme="@style/Theme.Cam2Me.Splash">
         <activity
             android:name=".MainActivity"
             android:exported="true">
