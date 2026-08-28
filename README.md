@@ -3,8 +3,9 @@
 Native Android + iOS apps that stream a phone's camera over the [macula
 mesh](https://github.com/macula-io/macula-rust-sdk) — pull-model: other
 mesh participants dial into the phone via a macula-station it's
-connected to, not the other way around. Skeleton stage right now; no
-camera capture or mesh session wired up yet.
+connected to, not the other way around. Identity, presence, contacts,
+and station connectivity (including nearest-station auto-discovery) are
+built; camera capture itself is not yet.
 
 ## Architecture
 
@@ -73,14 +74,18 @@ builds.
 
 ## Current status
 
-Both apps do exactly one thing: generate a puzzle-hardened Ed25519
-identity via `FfiKeyPair.generate()` and display its `node_id`. No
-network connection, no camera, no mesh session yet — this proves the FFI
-wiring end to end on both platforms without pulling in any feature work.
+Both apps generate a puzzle-hardened Ed25519 identity via
+`FfiKeyPair.generate()`, persisted across restarts. Android additionally
+has: a contact list (Room-backed), a presence heartbeat (pubsub, hashed
+phone numbers, online/offline status), and station connectivity --
+either up to 3 nearest stations auto-discovered via device location and
+`hecate_stations.list_stations` (the default; see `MeshSessionPool`,
+`StationDiscovery`), or a single manually-picked station when location
+access is off. Both connection modes maintain one or more
+`FfiSession`s and run a `PresenceHeartbeat` per session.
 
-Everything downstream of that — `FfiSession.connect`, `advertise`,
-`acceptStream`, camera capture, actually pushing frames — is a
-deliberately separate next pass.
+Camera capture, dial/pickup, and a real call UI are not built yet --
+that's the next pass, on both platforms.
 
 ## See also
 

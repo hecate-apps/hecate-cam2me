@@ -33,18 +33,31 @@ import io.macula.cam2me.data.KnownStation
 import io.macula.cam2me.data.countryFlagEmoji
 
 private const val CUSTOM_HOST_KEY = ""
+private const val AUTO_KEY = "auto"
 
 @Composable
 fun SettingsScreen(
+    currentAutoDiscovery: Boolean,
     currentHost: String,
     currentPort: Int,
     onBack: () -> Unit,
-    onSave: (host: String, port: Int) -> Unit,
+    onSaveAuto: () -> Unit,
+    onSaveManual: (host: String, port: Int) -> Unit,
 ) {
     val matchedKnown = KNOWN_STATIONS.find { it.host == currentHost && it.port == currentPort }
-    var selectedHost by remember { mutableStateOf(matchedKnown?.host ?: CUSTOM_HOST_KEY) }
-    var customHost by remember { mutableStateOf(if (matchedKnown == null) currentHost else "") }
-    var customPort by remember { mutableStateOf(if (matchedKnown == null) currentPort.toString() else "4433") }
+    var selectedHost by remember {
+        mutableStateOf(
+            when {
+                currentAutoDiscovery -> AUTO_KEY
+                matchedKnown != null -> matchedKnown.host
+                else -> CUSTOM_HOST_KEY
+            }
+        )
+    }
+    var customHost by remember { mutableStateOf(if (matchedKnown == null && !currentAutoDiscovery) currentHost else "") }
+    var customPort by remember {
+        mutableStateOf(if (matchedKnown == null && !currentAutoDiscovery) currentPort.toString() else "4433")
+    }
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState())) {
@@ -63,6 +76,12 @@ fun SettingsScreen(
                 modifier = Modifier.padding(horizontal = 24.dp),
             )
             Column(modifier = Modifier.selectableGroup()) {
+                StationOptionRow(
+                    label = "Automatic (nearest 3)",
+                    sublabel = "Uses your location — no station to pick",
+                    selected = selectedHost == AUTO_KEY,
+                    onSelect = { selectedHost = AUTO_KEY },
+                )
                 KNOWN_STATIONS.forEach { station ->
                     StationOptionRow(
                         label = "${countryFlagEmoji(station.country)} ${station.city}, ${station.country}",
@@ -103,8 +122,12 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth().padding(24.dp),
                 enabled = selectedHost != CUSTOM_HOST_KEY || (customHost.isNotBlank() && customPort.toIntOrNull() != null),
                 onClick = {
-                    val (host, port) = resolvedStation(selectedHost, customHost, customPort)
-                    onSave(host, port)
+                    if (selectedHost == AUTO_KEY) {
+                        onSaveAuto()
+                    } else {
+                        val (host, port) = resolvedStation(selectedHost, customHost, customPort)
+                        onSaveManual(host, port)
+                    }
                 },
             ) {
                 Text("Save")

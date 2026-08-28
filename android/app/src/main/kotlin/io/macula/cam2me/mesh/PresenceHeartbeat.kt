@@ -10,8 +10,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.json.JSONArray
 import org.json.JSONObject
 import io.macula.cam2me.data.ContactDao
+import io.macula.cam2me.data.DialTarget
 import io.macula.cam2me.data.PhonePresence
 import io.macula.cam2me.data.PhonePresenceDao
 
@@ -23,12 +25,20 @@ private const val HEARTBEAT_INTERVAL_MS = 30_000L
 private const val POLL_TIMEOUT_MS = 5_000L
 
 /**
- * Publishes this device's own (hashed) phone number + station on
- * [PRESENCE_TOPIC] every [HEARTBEAT_INTERVAL_MS], and listens for the same
- * from everyone else, updating [PhonePresenceDao] wherever an incoming
- * hash matches a known contact's phone number. The sender's node_id comes
- * from [FfiEvent.publisher] itself -- no id ever appears in the topic
- * name or needs duplicating into the payload.
+ * Publishes this device's own (hashed) phone number + EVERY station it's
+ * currently reachable through on [PRESENCE_TOPIC] every
+ * [HEARTBEAT_INTERVAL_MS], and listens for the same from everyone else,
+ * updating [PhonePresenceDao] wherever an incoming hash matches a known
+ * contact's phone number. The sender's node_id comes from
+ * [FfiEvent.publisher] itself -- no id ever appears in the topic name or
+ * needs duplicating into the payload.
+ *
+ * One instance per active session (see [MeshSessionPool] -- up to 3, for
+ * redundancy), each running its own independent loop against its own
+ * [session]. [myStations] is the FULL set every instance advertises, not
+ * just the one it's bound to: a contact who only overhears ONE of the
+ * (up to) 3 heartbeats still learns every viable dial address, rather
+ * than needing to receive from all three to build the complete picture.
  *
  * Runs as ONE sequential loop, never two concurrent coroutines touching
  * the same [FfiSession]. The control stream is one-frame-at-a-time per
@@ -37,15 +47,16 @@ private const val POLL_TIMEOUT_MS = 5_000L
  * if nothing else (like a concurrent publish) is racing it for the next
  * frame off the wire. macula-rust-sdk's own live pubsub test follows the
  * same subscribe -> publish -> recv_event order, sequentially, for the
- * same reason.
+ * same reason. Multiple instances running concurrently against DIFFERENT
+ * sessions is unaffected by that constraint -- it's per-session, not
+ * per-process.
  */
 class PresenceHeartbeat(
     private val scope: CoroutineScope,
     private val session: FfiSession,
     private val identity: FfiKeyPair,
     private val myPhoneNumber: String,
-    private val stationHost: String,
-    private val stationPort: Int,
+    private val myStations: List<DialTarget>,
     private val contactDao: ContactDao,
     private val phonePresenceDao: PhonePresenceDao,
 ) {
@@ -88,10 +99,11 @@ class PresenceHeartbeat(
     }
 
     private suspend fun publish(myHash: String) {
+        val stations = JSONArray()
+        myStations.forEach { stations.put(JSONObject().put("host", it.host).put("port", it.port)) }
         val payload = JSONObject()
             .put("phone_hash", myHash)
-            .put("station_host", stationHost)
-            .put("station_port", stationPort)
+            .put("stations", stations)
             .toString()
         session.publish(
             PRESENCE_TOPIC,
@@ -107,8 +119,14 @@ class PresenceHeartbeat(
         val text = (event.payload as? FfiValue.Text)?.v1 ?: return
         val json = JSONObject(text)
         val phoneHash = json.optString("phone_hash").ifEmpty { return }
-        val host = json.optString("station_host").ifEmpty { return }
-        val port = json.optInt("station_port", -1).takeIf { it > 0 } ?: return
+        val stationsArray = json.optJSONArray("stations") ?: return
+        val stations = (0 until stationsArray.length()).mapNotNull { i ->
+            val o = stationsArray.optJSONObject(i) ?: return@mapNotNull null
+            val host = o.optString("host").ifEmpty { return@mapNotNull null }
+            val port = o.optInt("port", -1).takeIf { it > 0 } ?: return@mapNotNull null
+            DialTarget(host, port)
+        }
+        if (stations.isEmpty()) return
 
         // Self-delivery is harmless and needs no special-casing: this
         // device's own phone number is never one of its own contacts, so
@@ -120,8 +138,7 @@ class PresenceHeartbeat(
             PhonePresence(
                 phoneNumber = matched.phoneNumber,
                 nodeIdHex = event.publisher.joinToString("") { "%02x".format(it) },
-                stationHost = host,
-                stationPort = port,
+                stationsJson = PhonePresence.encodeStations(stations),
                 lastSeenOnlineAtMs = System.currentTimeMillis(),
             )
         )

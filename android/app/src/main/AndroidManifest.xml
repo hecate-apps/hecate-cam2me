@@ -5,6 +5,12 @@
          camera-capture feature, not this skeleton. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Auto-connects to the nearest stations via hecate_stations.
+         list_stations. Coarse (city-level) is genuinely all "nearest
+         station" needs; FINE would ask for precision this feature never
+         uses. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <application
         android:label="Macula Cam2Me"
         android:allowBackup="false"
