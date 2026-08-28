@@ -32,14 +32,14 @@ jobs:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
         run: ./scripts/build-rust-android.sh
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
 
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: "9.1"
+          gradle-version: "9.7.1"
 
       - name: Gradle build
         working-directory: android

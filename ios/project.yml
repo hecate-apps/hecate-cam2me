@@ -13,6 +13,11 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: social.hecate.cam2me
         SWIFT_VERSION: "5.0"
+        # Modern auto-generated Info.plist (Xcode 13+'s own "New
+        # Project" default) -- INFOPLIST_KEY_* only takes effect once
+        # this is on. Without it, xcodebuild expects a physical
+        # Info.plist file that doesn't exist here and fails outright.
+        GENERATE_INFOPLIST_FILE: YES
         # Camera capture (NSCameraUsageDescription, AVFoundation) is a
         # feature-phase addition, not part of this skeleton.
         INFOPLIST_KEY_UILaunchScreen_Generation: true
