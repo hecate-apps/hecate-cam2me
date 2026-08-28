@@ -30,6 +30,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import social.hecate.cam2me.data.KNOWN_STATIONS
 import social.hecate.cam2me.data.KnownStation
+import social.hecate.cam2me.data.countryFlagEmoji
 
 private const val CUSTOM_HOST_KEY = ""
 
@@ -64,7 +65,7 @@ fun SettingsScreen(
             Column(modifier = Modifier.selectableGroup()) {
                 KNOWN_STATIONS.forEach { station ->
                     StationOptionRow(
-                        label = "${station.city}, ${station.country}",
+                        label = "${countryFlagEmoji(station.country)} ${station.city}, ${station.country}",
                         sublabel = station.host,
                         selected = selectedHost == station.host,
                         onSelect = { selectedHost = station.host },
