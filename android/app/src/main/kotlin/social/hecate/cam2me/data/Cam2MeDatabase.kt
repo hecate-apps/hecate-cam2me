@@ -5,9 +5,10 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [PairedContact::class], version = 1, exportSchema = true)
+@Database(entities = [Contact::class, PhonePresence::class], version = 1, exportSchema = true)
 abstract class Cam2MeDatabase : RoomDatabase() {
-    abstract fun pairedContactDao(): PairedContactDao
+    abstract fun contactDao(): ContactDao
+    abstract fun phonePresenceDao(): PhonePresenceDao
 
     companion object {
         @Volatile
