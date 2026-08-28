@@ -1,4 +1,4 @@
-package social.hecate.cam2me.mesh
+package io.macula.cam2me.mesh
 
 /**
  * The realm every hecate-service on the macula-demo fleet already shares

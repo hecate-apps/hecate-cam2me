@@ -1,4 +1,4 @@
-package social.hecate.cam2me.ui
+package io.macula.cam2me.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,8 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import social.hecate.cam2me.data.Contact
-import social.hecate.cam2me.data.PhonePresence
+import io.macula.cam2me.data.Contact
+import io.macula.cam2me.data.PhonePresence
 
 /** A contact is shown as online if a presence heartbeat matched it more
  * recently than this -- three heartbeat intervals (see PresenceHeartbeat's

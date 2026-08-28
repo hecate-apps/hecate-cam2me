@@ -1,4 +1,4 @@
-package social.hecate.cam2me.settings
+package io.macula.cam2me.settings
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit

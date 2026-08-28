@@ -1,4 +1,4 @@
-package social.hecate.cam2me.ui
+package io.macula.cam2me.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,9 +28,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import social.hecate.cam2me.data.KNOWN_STATIONS
-import social.hecate.cam2me.data.KnownStation
-import social.hecate.cam2me.data.countryFlagEmoji
+import io.macula.cam2me.data.KNOWN_STATIONS
+import io.macula.cam2me.data.KnownStation
+import io.macula.cam2me.data.countryFlagEmoji
 
 private const val CUSTOM_HOST_KEY = ""
 

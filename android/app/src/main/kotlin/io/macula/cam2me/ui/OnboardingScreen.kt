@@ -1,4 +1,4 @@
-package social.hecate.cam2me.ui
+package io.macula.cam2me.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -37,7 +37,7 @@ fun OnboardingScreen(onPhoneNumberEntered: (String) -> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("Hecate Cam2Me", style = MaterialTheme.typography.headlineMedium)
+            Text("Macula Cam2Me", style = MaterialTheme.typography.headlineMedium)
             Text(
                 "Enter your own phone number. It's hashed before it ever " +
                     "leaves this device -- only someone who already has your " +

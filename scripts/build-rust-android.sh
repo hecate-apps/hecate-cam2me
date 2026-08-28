@@ -15,7 +15,7 @@ KOTLIN_SRC_ROOT="$REPO_ROOT/android/app/src/main/kotlin"
 # uniffi.toml's [bindings.kotlin] package_name = "io.macula.sdk" -- the
 # generated file always lands under that package path relative to
 # --out-dir, so this must track that setting exactly, not our own app's
-# package (social.hecate.cam2me).
+# package (io.macula.cam2me).
 KOTLIN_OUT_DIR="$KOTLIN_SRC_ROOT/io/macula/sdk"
 
 ABIS=(arm64-v8a armeabi-v7a x86_64)

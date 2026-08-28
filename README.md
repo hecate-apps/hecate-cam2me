@@ -1,4 +1,4 @@
-# hecate-cam2me
+# macula-cam2me
 
 Native Android + iOS apps that stream a phone's camera over the [macula
 mesh](https://github.com/macula-io/macula-rust-sdk) — pull-model: other
@@ -11,7 +11,7 @@ camera capture or mesh session wired up yet.
 Two separate native apps, sharing nothing but the Rust core:
 
 ```
-hecate-cam2me/
+macula-cam2me/
 ├── rust/macula-rust-sdk/     # git submodule -> macula-io/macula-rust-sdk
 ├── android/                  # Kotlin, Gradle, generated bindings via JNA
 ├── ios/                      # Swift, XcodeGen, generated bindings via XCFramework
@@ -56,7 +56,7 @@ Requires: macOS with Xcode, [XcodeGen](https://github.com/yonaskolb/XcodeGen)
 rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
 ./scripts/build-rust-ios.sh
 cd ios && xcodegen generate
-open HecateCam2Me.xcodeproj
+open MaculaCam2Me.xcodeproj
 ```
 
 **Honest status note:** this repo was scaffolded from a Linux

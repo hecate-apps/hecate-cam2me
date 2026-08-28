@@ -10,7 +10,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FFI_CRATE_DIR="$REPO_ROOT/rust/macula-rust-sdk"
-SWIFT_OUT_DIR="$REPO_ROOT/ios/HecateCam2Me/ffi"
+SWIFT_OUT_DIR="$REPO_ROOT/ios/MaculaCam2Me/ffi"
 XCFRAMEWORK_OUT="$REPO_ROOT/ios/MaculaRustSdkFFI.xcframework"
 LIB_NAME="libmacula_rust_sdk_ffi.a"
 

@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:label="Hecate Cam2Me"
+        android:label="Macula Cam2Me"
         android:allowBackup="false"
         android:theme="@style/Theme.Cam2Me.Splash">
         <activity

@@ -35,8 +35,8 @@ jobs:
         working-directory: ios
         run: |
           xcodebuild build \
-            -project HecateCam2Me.xcodeproj \
-            -scheme HecateCam2Me \
+            -project MaculaCam2Me.xcodeproj \
+            -scheme MaculaCam2Me \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO

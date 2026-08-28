@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "hecate-cam2me"
+rootProject.name = "macula-cam2me"
 include(":app")

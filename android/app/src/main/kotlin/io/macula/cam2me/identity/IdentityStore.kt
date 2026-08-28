@@ -1,4 +1,4 @@
-package social.hecate.cam2me.identity
+package io.macula.cam2me.identity
 
 import android.content.Context
 import android.util.Base64

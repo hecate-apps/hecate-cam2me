@@ -6,14 +6,14 @@ plugins {
 }
 
 android {
-    namespace = "social.hecate.cam2me"
+    namespace = "io.macula.cam2me"
     // compose-bom's own transitive deps (material-ripple-android 1.12.0)
     // require API 37+ to compile against -- caught by CI's
     // checkDebugAarMetadata failing outright with 36, not assumed.
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "social.hecate.cam2me"
+        applicationId = "io.macula.cam2me"
         minSdk = 26
         targetSdk = 37
         versionCode = 1

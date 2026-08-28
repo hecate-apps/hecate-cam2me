@@ -1,17 +1,17 @@
-name: HecateCam2Me
+name: MaculaCam2Me
 options:
-  bundleIdPrefix: social.hecate
+  bundleIdPrefix: io.macula
   deploymentTarget:
     iOS: "17.0"
 
 targets:
-  HecateCam2Me:
+  MaculaCam2Me:
     type: application
     platform: iOS
-    sources: HecateCam2Me
+    sources: MaculaCam2Me
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: social.hecate.cam2me
+        PRODUCT_BUNDLE_IDENTIFIER: io.macula.cam2me
         SWIFT_VERSION: "5.0"
         # Modern auto-generated Info.plist (Xcode 13+'s own "New
         # Project" default) -- INFOPLIST_KEY_* only takes effect once

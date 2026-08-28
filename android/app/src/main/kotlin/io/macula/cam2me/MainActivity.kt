@@ -1,4 +1,4 @@
-package social.hecate.cam2me
+package io.macula.cam2me
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -18,16 +18,16 @@ import io.macula.sdk.FfiKeyPair
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import social.hecate.cam2me.data.Cam2MeDatabase
-import social.hecate.cam2me.data.Contact
-import social.hecate.cam2me.identity.IdentityStore
-import social.hecate.cam2me.mesh.MeshSession
-import social.hecate.cam2me.mesh.PresenceHeartbeat
-import social.hecate.cam2me.settings.SettingsStore
-import social.hecate.cam2me.ui.ContactListScreen
-import social.hecate.cam2me.ui.ContactRow
-import social.hecate.cam2me.ui.OnboardingScreen
-import social.hecate.cam2me.ui.SettingsScreen
+import io.macula.cam2me.data.Cam2MeDatabase
+import io.macula.cam2me.data.Contact
+import io.macula.cam2me.identity.IdentityStore
+import io.macula.cam2me.mesh.MeshSession
+import io.macula.cam2me.mesh.PresenceHeartbeat
+import io.macula.cam2me.settings.SettingsStore
+import io.macula.cam2me.ui.ContactListScreen
+import io.macula.cam2me.ui.ContactRow
+import io.macula.cam2me.ui.OnboardingScreen
+import io.macula.cam2me.ui.SettingsScreen
 
 /**
  * Wires identity persistence, mesh connect, the presence heartbeat and the

@@ -1,4 +1,4 @@
-package social.hecate.cam2me.mesh
+package io.macula.cam2me.mesh
 
 import io.macula.sdk.FfiEvent
 import io.macula.sdk.FfiKeyPair
@@ -11,9 +11,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.json.JSONObject
-import social.hecate.cam2me.data.ContactDao
-import social.hecate.cam2me.data.PhonePresence
-import social.hecate.cam2me.data.PhonePresenceDao
+import io.macula.cam2me.data.ContactDao
+import io.macula.cam2me.data.PhonePresence
+import io.macula.cam2me.data.PhonePresenceDao
 
 private const val HEARTBEAT_INTERVAL_MS = 30_000L
 

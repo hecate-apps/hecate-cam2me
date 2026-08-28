@@ -1,4 +1,4 @@
-package social.hecate.cam2me.mesh
+package io.macula.cam2me.mesh
 
 import io.macula.sdk.FfiKeyPair
 import io.macula.sdk.FfiSession

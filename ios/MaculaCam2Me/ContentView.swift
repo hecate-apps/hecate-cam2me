@@ -16,7 +16,7 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            Text("Hecate Cam2Me")
+            Text("Macula Cam2Me")
                 .font(.title)
             Text("macula-rust-sdk-ffi is alive.")
             Text("node_id: \(nodeIdHex)")

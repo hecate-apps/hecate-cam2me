@@ -1,4 +1,4 @@
-package social.hecate.cam2me.data
+package io.macula.cam2me.data
 
 import android.content.Context
 import androidx.room.Database
