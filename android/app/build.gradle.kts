@@ -1,15 +1,19 @@
 plugins {
     id("com.android.application")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
     namespace = "social.hecate.cam2me"
-    compileSdk = 36
+    // compose-bom's own transitive deps (material-ripple-android 1.12.0)
+    // require API 37+ to compile against -- caught by CI's
+    // checkDebugAarMetadata failing outright with 36, not assumed.
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "social.hecate.cam2me"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "0.1.0"
     }
