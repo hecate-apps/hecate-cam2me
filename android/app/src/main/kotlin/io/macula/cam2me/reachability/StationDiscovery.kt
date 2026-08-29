@@ -53,13 +53,23 @@ object StationDiscovery {
         val city = field("city")?.asText() ?: ""
         val country = field("country")?.asText() ?: ""
         val port = field("quic_port")?.asInt()?.toInt() ?: DEFAULT_QUIC_PORT
-        // host_advertised (the literal dial address the station announced
-        // for itself) is preferred over hostname (the node's own
-        // self-reported name, not guaranteed to resolve for every
-        // client) -- see station_read_model.erl's own doc for why the two
-        // fields exist independently.
-        val host = field("host_advertised")?.asItems()?.firstOrNull()?.asText()
-            ?: field("hostname")?.asText()
+        // hostname preferred over host_advertised: MeshSessionPool connects
+        // with FfiTrust.WebPki, which validates a CA cert against the
+        // hostname used to connect -- station-de-frankfurt.macula.io's cert
+        // has no SAN for its own bare IP, so dialing host_advertised (an IP
+        // literal, e.g. "2a01:7e01::f03c:94ff:fe22:719e") under WebPki would
+        // fail TLS validation outright. Confirmed against a real
+        // hecate_stations.list_stations response, not assumed -- see
+        // FfiTrust's own doc: Pinned{node_id} is "the right mode once a
+        // station's identity is known (DHT-resolved...)", i.e. exactly the
+        // host_advertised case, which this doesn't do yet. Every station on
+        // the live fleet publishes both fields together, so falling back to
+        // host_advertised here doesn't currently happen in practice --
+        // wiring Pinned trust into MeshSessionPool is real, separate,
+        // not-yet-built work for the day a station-endpoint-only entry
+        // (no node_record, no hostname) actually shows up.
+        val host = field("hostname")?.asText()
+            ?: field("host_advertised")?.asItems()?.firstOrNull()?.asText()
             ?: return null
         return KnownStation(host, port, city, country)
     }
