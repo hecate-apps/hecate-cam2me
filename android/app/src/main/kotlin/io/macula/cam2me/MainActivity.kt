@@ -27,6 +27,7 @@ import io.macula.cam2me.onboarding.OnboardingScreen
 import io.macula.cam2me.onboarding.OwnerPhoneNumber
 import io.macula.cam2me.presence.DialTarget
 import io.macula.cam2me.presence.PresenceHeartbeat
+import io.macula.cam2me.reachability.ActiveStation
 import io.macula.cam2me.reachability.KnownStation
 import io.macula.cam2me.reachability.LocationFix
 import io.macula.cam2me.reachability.MeshSessionPool
@@ -106,6 +107,7 @@ private fun ConnectedApp(
     val context = activity.applicationContext
     var screen by remember { mutableStateOf<AppScreen>(AppScreen.Contacts) }
     var heartbeats by remember { mutableStateOf<List<PresenceHeartbeat>>(emptyList()) }
+    var activeStations by remember { mutableStateOf<List<ActiveStation>>(emptyList()) }
 
     var locationGranted by remember { mutableStateOf(LocationFix.hasPermission(context)) }
     val requestLocation = rememberLauncherForActivityResult(
@@ -144,9 +146,10 @@ private fun ConnectedApp(
         }
 
         heartbeats.forEach { it.stop() }
-        val activeStations = MeshSessionPool.connectAll(targets, nodeKeyPair)
-        val myStations = activeStations.map { DialTarget(it.target.host, it.target.port) }
-        heartbeats = activeStations.map { active ->
+        val connected = MeshSessionPool.connectAll(targets, nodeKeyPair)
+        activeStations = connected
+        val myStations = connected.map { DialTarget(it.target.host, it.target.port) }
+        heartbeats = connected.map { active ->
             PresenceHeartbeat(
                 scope = activity.lifecycleScope,
                 session = active.session,
@@ -182,13 +185,18 @@ private fun ConnectedApp(
             )
         }
         AppScreen.Contacts -> {
-            ContactsScreen(activity, db, onOpenSettings = { screen = AppScreen.Settings })
+            ContactsScreen(activity, db, activeStations, onOpenSettings = { screen = AppScreen.Settings })
         }
     }
 }
 
 @Composable
-private fun ContactsScreen(activity: ComponentActivity, db: Cam2MeDatabase, onOpenSettings: () -> Unit) {
+private fun ContactsScreen(
+    activity: ComponentActivity,
+    db: Cam2MeDatabase,
+    activeStations: List<ActiveStation>,
+    onOpenSettings: () -> Unit,
+) {
     val rows by remember {
         combine(db.contactDao().observeAll(), db.phonePresenceDao().observeForContacts()) { contacts, presenceList ->
             val presenceByNumber = presenceList.associateBy { it.phoneNumber }
@@ -209,6 +217,7 @@ private fun ContactsScreen(activity: ComponentActivity, db: Cam2MeDatabase, onOp
     ContactListScreen(
         contacts = rows,
         nowMs = nowMs,
+        activeStations = activeStations,
         onAddContact = { phoneNumber, displayName ->
             activity.lifecycleScope.launch {
                 db.contactDao().upsert(

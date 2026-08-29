@@ -1,14 +1,19 @@
 package io.macula.cam2me.contacts
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -23,9 +28,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.macula.cam2me.presence.PhonePresence
+import io.macula.cam2me.reachability.ActiveStation
+import io.macula.cam2me.reachability.countryFlagEmoji
 
 /** A contact is shown as online if a presence heartbeat matched it more
  * recently than this -- three heartbeat intervals (see PresenceHeartbeat's
@@ -39,6 +48,7 @@ data class ContactRow(val contact: Contact, val presence: PhonePresence?)
 fun ContactListScreen(
     contacts: List<ContactRow>,
     nowMs: Long,
+    activeStations: List<ActiveStation>,
     onAddContact: (phoneNumber: String, displayName: String) -> Unit,
     onOpenSettings: () -> Unit,
 ) {
@@ -57,7 +67,10 @@ fun ContactListScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text("Contacts", style = MaterialTheme.typography.headlineSmall)
-                TextButton(onClick = onOpenSettings) { Text("Settings") }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    StationIndicator(activeStations)
+                    TextButton(onClick = onOpenSettings) { Text("Settings") }
+                }
             }
             if (contacts.isEmpty()) {
                 Text(
@@ -86,6 +99,45 @@ fun ContactListScreen(
                 onAddContact(phoneNumber, displayName)
                 showAddDialog = false
             },
+        )
+    }
+}
+
+/** Green when at least one mesh session is up, red otherwise -- the same
+ * signal [io.macula.cam2me.presence.PresenceHeartbeat] instances are built
+ * from, so "led is green" and "contacts can see me online" are the same
+ * fact. Labeled with the nearest connected station (first in the list is
+ * always the nearest -- see [io.macula.cam2me.reachability.StationDiscovery]
+ * and [io.macula.cam2me.reachability.MeshSessionPool]'s own ordering
+ * guarantees); a "+N" suffix hints at the redundant connections without
+ * spelling out all three in a header that has to stay one line. */
+@Composable
+private fun StationIndicator(activeStations: List<ActiveStation>) {
+    val primary = activeStations.firstOrNull()
+    // A manually-entered fallback station carries no city/country -- see
+    // MainActivity's manualTarget -- so falls back to its raw host rather
+    // than rendering an empty label between the dot and Settings.
+    val label = primary?.let {
+        if (it.target.city.isNotBlank()) "${countryFlagEmoji(it.target.country)} ${it.target.city}" else it.target.host
+    } ?: "Offline"
+    val extra = if (activeStations.size > 1) " +${activeStations.size - 1}" else ""
+
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(end = 12.dp)) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .background(if (primary != null) Color(0xFF2E7D32) else Color(0xFFC62828), CircleShape),
+        )
+        Text(
+            "$label$extra",
+            style = MaterialTheme.typography.labelMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            // Bounded so a long fallback hostname (see the comment above)
+            // truncates instead of squeezing Settings into a two-line wrap
+            // -- found live: station-de-frankfurt.macula.io at full width
+            // did exactly that.
+            modifier = Modifier.padding(start = 6.dp).widthIn(max = 96.dp),
         )
     }
 }
