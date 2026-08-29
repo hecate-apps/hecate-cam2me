@@ -53,24 +53,21 @@ object StationDiscovery {
         val city = field("city")?.asText() ?: ""
         val country = field("country")?.asText() ?: ""
         val port = field("quic_port")?.asInt()?.toInt() ?: DEFAULT_QUIC_PORT
-        // hostname preferred over host_advertised: MeshSessionPool connects
-        // with FfiTrust.WebPki, which validates a CA cert against the
-        // hostname used to connect -- station-de-frankfurt.macula.io's cert
-        // has no SAN for its own bare IP, so dialing host_advertised (an IP
-        // literal, e.g. "2a01:7e01::f03c:94ff:fe22:719e") under WebPki would
-        // fail TLS validation outright. Confirmed against a real
-        // hecate_stations.list_stations response, not assumed -- see
-        // FfiTrust's own doc: Pinned{node_id} is "the right mode once a
-        // station's identity is known (DHT-resolved...)", i.e. exactly the
-        // host_advertised case, which this doesn't do yet. Every station on
-        // the live fleet publishes both fields together, so falling back to
-        // host_advertised here doesn't currently happen in practice --
-        // wiring Pinned trust into MeshSessionPool is real, separate,
-        // not-yet-built work for the day a station-endpoint-only entry
-        // (no node_record, no hostname) actually shows up.
-        val host = field("hostname")?.asText()
-            ?: field("host_advertised")?.asItems()?.firstOrNull()?.asText()
-            ?: return null
-        return KnownStation(host, port, city, country)
+        // host_advertised+node_id (Pinned trust) preferred over hostname
+        // (WebPki): host_advertised is the station's real dial address --
+        // hostname is a convenience for the subset of stations that also
+        // sit behind DNS+CA cert. A no-DNS station (stations-linode-toronto,
+        // 2026-08-29, provisioned specifically to test this) publishes
+        // host_advertised with no hostname at all; MeshSessionPool picks
+        // FfiTrust.Pinned(nodeId) whenever nodeId is non-null, which is the
+        // only mode able to validate a connection with no CA-issued cert
+        // to check -- see FfiTrust's own doc. Falling back to hostname
+        // (WebPki) covers the case where a station only published a
+        // node_record and no station_endpoint at all.
+        val pinned = field("node_id")?.asBytes()?.let { nodeId ->
+            field("host_advertised")?.asItems()?.firstOrNull()?.asText()?.let { it to nodeId }
+        }
+        val (host, nodeId) = pinned ?: ((field("hostname")?.asText() ?: return null) to null)
+        return KnownStation(host, port, city, country, nodeId)
     }
 }

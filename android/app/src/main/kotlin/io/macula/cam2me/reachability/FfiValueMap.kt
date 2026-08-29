@@ -32,3 +32,5 @@ fun FfiValue.asDouble(): Double? = when (this) {
 fun FfiValue.asInt(): Long? = (this as? FfiValue.Int)?.v1
 
 fun FfiValue.asItems(): List<FfiValue>? = (this as? FfiValue.Items)?.v1
+
+fun FfiValue.asBytes(): ByteArray? = (this as? FfiValue.Bytes)?.v1

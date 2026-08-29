@@ -3,8 +3,22 @@ package io.macula.cam2me.reachability
 /** One of the macula-demo fleet's public station doors -- see the
  * per-box station configs under macula-demo/infrastructure/ (each a
  * "stations-<box>/config/<name>.json") for the authoritative source
- * this list is drawn from. All on the standard 4433 QUIC port. */
-data class KnownStation(val host: String, val port: Int, val city: String, val country: String)
+ * this list is drawn from. All on the standard 4433 QUIC port.
+ *
+ * [nodeId] is null for every entry in [KNOWN_STATIONS]: this static list is
+ * dialed by hostname under [io.macula.sdk.FfiTrust.WebPki], the same as any
+ * other DNS-fronted public service, and never needs the station's identity
+ * pinned. [StationDiscovery] fills it in for stations reached by a bare
+ * `host_advertised` IPv6 literal instead, where [io.macula.sdk.FfiTrust.Pinned]
+ * is the only mode that can validate the connection -- there is no
+ * hostname/CA cert for a WebPki dial to check. */
+data class KnownStation(
+    val host: String,
+    val port: Int,
+    val city: String,
+    val country: String,
+    val nodeId: ByteArray? = null,
+)
 
 val KNOWN_STATIONS = listOf(
     KnownStation("station-de-frankfurt.macula.io", 4433, "Frankfurt", "DE"),
