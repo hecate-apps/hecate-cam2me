@@ -1,4 +1,4 @@
-package io.macula.cam2me.data
+package io.macula.cam2me.reachability
 
 /** One of the macula-demo fleet's public station doors -- see the
  * per-box station configs under macula-demo/infrastructure/ (each a

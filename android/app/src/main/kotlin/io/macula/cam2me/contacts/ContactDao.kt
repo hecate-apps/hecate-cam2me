@@ -1,4 +1,4 @@
-package io.macula.cam2me.data
+package io.macula.cam2me.contacts
 
 import androidx.room.Dao
 import androidx.room.Query

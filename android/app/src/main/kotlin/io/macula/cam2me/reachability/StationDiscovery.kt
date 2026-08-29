@@ -1,6 +1,6 @@
-package io.macula.cam2me.mesh
+package io.macula.cam2me.reachability
 
-import io.macula.cam2me.data.KnownStation
+import io.macula.cam2me.APP_REALM
 import io.macula.sdk.FfiCallResponse
 import io.macula.sdk.FfiKeyPair
 import io.macula.sdk.FfiSession
@@ -40,7 +40,7 @@ object StationDiscovery {
             ),
         )
         val response = try {
-            bootstrap.call(LIST_STATIONS_PROCEDURE, CAM2ME_REALM, payload, CALL_TIMEOUT_MS, identity)
+            bootstrap.call(LIST_STATIONS_PROCEDURE, APP_REALM, payload, CALL_TIMEOUT_MS, identity)
         } catch (e: Exception) {
             return null
         }

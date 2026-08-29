@@ -1,4 +1,4 @@
-package io.macula.cam2me.ui
+package io.macula.cam2me.onboarding
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

@@ -1,4 +1,4 @@
-package io.macula.cam2me.data
+package io.macula.cam2me.presence
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

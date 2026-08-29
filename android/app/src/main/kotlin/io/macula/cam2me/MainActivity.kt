@@ -20,25 +20,26 @@ import io.macula.sdk.FfiKeyPair
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import io.macula.cam2me.data.Cam2MeDatabase
-import io.macula.cam2me.data.Contact
-import io.macula.cam2me.data.DialTarget
-import io.macula.cam2me.data.KnownStation
-import io.macula.cam2me.identity.IdentityStore
-import io.macula.cam2me.location.LocationFix
-import io.macula.cam2me.mesh.MeshSessionPool
-import io.macula.cam2me.mesh.PresenceHeartbeat
-import io.macula.cam2me.mesh.StationDiscovery
-import io.macula.cam2me.settings.SettingsStore
-import io.macula.cam2me.ui.ContactListScreen
-import io.macula.cam2me.ui.ContactRow
-import io.macula.cam2me.ui.OnboardingScreen
-import io.macula.cam2me.ui.SettingsScreen
+import io.macula.cam2me.contacts.Contact
+import io.macula.cam2me.contacts.ContactListScreen
+import io.macula.cam2me.contacts.ContactRow
+import io.macula.cam2me.onboarding.OnboardingScreen
+import io.macula.cam2me.onboarding.OwnerPhoneNumber
+import io.macula.cam2me.presence.DialTarget
+import io.macula.cam2me.presence.PresenceHeartbeat
+import io.macula.cam2me.reachability.KnownStation
+import io.macula.cam2me.reachability.LocationFix
+import io.macula.cam2me.reachability.MeshSessionPool
+import io.macula.cam2me.reachability.NodeKeyPair
+import io.macula.cam2me.reachability.SettingsScreen
+import io.macula.cam2me.reachability.StationDiscovery
+import io.macula.cam2me.reachability.StationPreference
 
 /**
- * Wires identity persistence, nearest-station discovery, mesh connect, the
- * presence heartbeat and the contact list together. Camera capture,
- * dial/pickup and a real call UI are the next feature pass, not this one.
+ * Wires this device's node keypair, nearest-station discovery, mesh
+ * connect, the presence heartbeat and the contact list together. Camera
+ * capture, dial/pickup and a real call UI are the next feature pass, not
+ * this one.
  */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,28 +63,31 @@ class MainActivity : ComponentActivity() {
 private fun Cam2MeApp(activity: ComponentActivity, db: Cam2MeDatabase, onReady: () -> Unit) {
     val context = activity.applicationContext
 
-    val identity by produceState<FfiKeyPair?>(initialValue = null) {
-        value = IdentityStore.loadOrCreate(context)
+    val nodeKeyPair by produceState<FfiKeyPair?>(initialValue = null) {
+        value = NodeKeyPair.loadOrCreate(context)
     }
-    val settings by SettingsStore.observe(context).collectAsStateWithLifecycle(initialValue = null)
+    val ownerPhoneNumber by OwnerPhoneNumber.observe(context).collectAsStateWithLifecycle(initialValue = null)
+    val stationPreference by StationPreference.observe(context)
+        .collectAsStateWithLifecycle(initialValue = null)
 
-    val currentIdentity = identity
-    val currentSettings = settings
-    if (currentIdentity == null || currentSettings == null) {
+    val currentNodeKeyPair = nodeKeyPair
+    val currentPreference = stationPreference
+    if (currentNodeKeyPair == null || currentPreference == null) {
         return
     }
     LaunchedEffect(Unit) { onReady() }
 
-    if (currentSettings.myPhoneNumber == null) {
-        OnboardingScreen(onPhoneNumberEntered = { phoneNumber ->
+    val phoneNumber = ownerPhoneNumber
+    if (phoneNumber == null) {
+        OnboardingScreen(onPhoneNumberEntered = { entered ->
             activity.lifecycleScope.launch {
-                SettingsStore.setMyPhoneNumber(context, phoneNumber)
+                OwnerPhoneNumber.set(context, entered)
             }
         })
         return
     }
 
-    ConnectedApp(activity, db, currentIdentity, currentSettings, currentSettings.myPhoneNumber)
+    ConnectedApp(activity, db, currentNodeKeyPair, currentPreference, phoneNumber)
 }
 
 private sealed class AppScreen {
@@ -95,9 +99,9 @@ private sealed class AppScreen {
 private fun ConnectedApp(
     activity: ComponentActivity,
     db: Cam2MeDatabase,
-    identity: FfiKeyPair,
-    settings: SettingsStore.Settings,
-    myPhoneNumber: String,
+    nodeKeyPair: FfiKeyPair,
+    preference: StationPreference.Preference,
+    ownerPhoneNumber: String,
 ) {
     val context = activity.applicationContext
     var screen by remember { mutableStateOf<AppScreen>(AppScreen.Contacts) }
@@ -109,16 +113,16 @@ private fun ConnectedApp(
     ) { granted -> locationGranted = granted }
 
     // Auto discovery needs the permission dialog exactly once per launch,
-    // not once per recomposition -- Unit as the key, not settings.autoDiscovery,
-    // so turning auto mode off and back on in the same session doesn't
-    // re-prompt a user who already answered.
+    // not once per recomposition -- Unit as the key, not
+    // preference.autoDiscovery, so turning auto mode off and back on in
+    // the same session doesn't re-prompt a user who already answered.
     LaunchedEffect(Unit) {
-        if (settings.autoDiscovery && !locationGranted) {
+        if (preference.autoDiscovery && !locationGranted) {
             requestLocation.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION)
         }
     }
 
-    val manualTarget = KnownStation(settings.stationHost, settings.stationPort, "", "")
+    val manualTarget = KnownStation(preference.stationHost, preference.stationPort, "", "")
 
     // Re-runs whenever the manual fallback OR auto-mode OR the permission
     // answer changes. Two-phase connect: the bootstrap/fallback station
@@ -126,13 +130,13 @@ private fun ConnectedApp(
     // through), then the real target list connects -- connectAll's own
     // diffing reuses the bootstrap session for free if it turns out to be
     // among the nearest 3, and closes it otherwise.
-    LaunchedEffect(settings.autoDiscovery, settings.stationHost, settings.stationPort, locationGranted) {
-        val bootstrap = MeshSessionPool.connectAll(listOf(manualTarget), identity).firstOrNull()?.session
+    LaunchedEffect(preference.autoDiscovery, preference.stationHost, preference.stationPort, locationGranted) {
+        val bootstrap = MeshSessionPool.connectAll(listOf(manualTarget), nodeKeyPair).firstOrNull()?.session
 
-        val targets = if (settings.autoDiscovery && locationGranted && bootstrap != null) {
+        val targets = if (preference.autoDiscovery && locationGranted && bootstrap != null) {
             val fix = LocationFix.lastKnown(context)
             val discovered = fix?.let {
-                StationDiscovery.nearestStations(bootstrap, identity, it.latitude, it.longitude, limit = 3)
+                StationDiscovery.nearestStations(bootstrap, nodeKeyPair, it.latitude, it.longitude, limit = 3)
             }
             discovered?.takeIf { it.isNotEmpty() } ?: listOf(manualTarget)
         } else {
@@ -140,14 +144,14 @@ private fun ConnectedApp(
         }
 
         heartbeats.forEach { it.stop() }
-        val activeStations = MeshSessionPool.connectAll(targets, identity)
+        val activeStations = MeshSessionPool.connectAll(targets, nodeKeyPair)
         val myStations = activeStations.map { DialTarget(it.target.host, it.target.port) }
         heartbeats = activeStations.map { active ->
             PresenceHeartbeat(
                 scope = activity.lifecycleScope,
                 session = active.session,
-                identity = identity,
-                myPhoneNumber = myPhoneNumber,
+                identity = nodeKeyPair,
+                myPhoneNumber = ownerPhoneNumber,
                 myStations = myStations,
                 contactDao = db.contactDao(),
                 phonePresenceDao = db.phonePresenceDao(),
@@ -158,20 +162,20 @@ private fun ConnectedApp(
     when (screen) {
         AppScreen.Settings -> {
             SettingsScreen(
-                currentAutoDiscovery = settings.autoDiscovery,
-                currentHost = settings.stationHost,
-                currentPort = settings.stationPort,
+                currentAutoDiscovery = preference.autoDiscovery,
+                currentHost = preference.stationHost,
+                currentPort = preference.stationPort,
                 onBack = { screen = AppScreen.Contacts },
                 onSaveAuto = {
                     activity.lifecycleScope.launch {
                         if (!locationGranted) requestLocation.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION)
-                        SettingsStore.setAutoDiscovery(context)
+                        StationPreference.setAutoDiscovery(context)
                     }
                     screen = AppScreen.Contacts
                 },
                 onSaveManual = { host, port ->
                     activity.lifecycleScope.launch {
-                        SettingsStore.setManualStation(context, host, port)
+                        StationPreference.setManualStation(context, host, port)
                     }
                     screen = AppScreen.Contacts
                 },

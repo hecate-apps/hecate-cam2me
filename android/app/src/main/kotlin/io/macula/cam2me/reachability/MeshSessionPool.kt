@@ -1,6 +1,5 @@
-package io.macula.cam2me.mesh
+package io.macula.cam2me.reachability
 
-import io.macula.cam2me.data.KnownStation
 import io.macula.sdk.FfiKeyPair
 import io.macula.sdk.FfiSession
 import io.macula.sdk.FfiTrust

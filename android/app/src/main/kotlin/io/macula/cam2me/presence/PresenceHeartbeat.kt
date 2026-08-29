@@ -1,4 +1,4 @@
-package io.macula.cam2me.mesh
+package io.macula.cam2me.presence
 
 import io.macula.sdk.FfiEvent
 import io.macula.sdk.FfiKeyPair
@@ -12,10 +12,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
-import io.macula.cam2me.data.ContactDao
-import io.macula.cam2me.data.DialTarget
-import io.macula.cam2me.data.PhonePresence
-import io.macula.cam2me.data.PhonePresenceDao
+import io.macula.cam2me.APP_REALM
+import io.macula.cam2me.contacts.ContactDao
 
 private const val HEARTBEAT_INTERVAL_MS = 30_000L
 
@@ -23,6 +21,10 @@ private const val HEARTBEAT_INTERVAL_MS = 30_000L
  * around to check whether a publish is due. Short enough that publish
  * stays close to on-schedule, long enough not to busy-loop. */
 private const val POLL_TIMEOUT_MS = 5_000L
+
+/** Type-level topic, no ids -- every device's own hashed phone number,
+ * node id and stations live in the payload, never in the topic name. */
+private const val PRESENCE_TOPIC = "cam2me.presence"
 
 /**
  * Publishes this device's own (hashed) phone number + EVERY station it's
@@ -73,7 +75,7 @@ class PresenceHeartbeat(
     }
 
     private suspend fun loop() {
-        session.subscribe(PRESENCE_TOPIC, CAM2ME_REALM, identity)
+        session.subscribe(PRESENCE_TOPIC, APP_REALM, identity)
         val myHash = sha256Hex(myPhoneNumber)
         var lastPublishAtMs = 0L
 
@@ -107,7 +109,7 @@ class PresenceHeartbeat(
             .toString()
         session.publish(
             PRESENCE_TOPIC,
-            CAM2ME_REALM,
+            APP_REALM,
             seq.incrementAndGet().toULong(),
             FfiValue.Text(payload),
             System.currentTimeMillis().toULong(),

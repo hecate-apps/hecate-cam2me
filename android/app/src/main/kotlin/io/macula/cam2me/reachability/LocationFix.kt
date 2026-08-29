@@ -1,4 +1,4 @@
-package io.macula.cam2me.location
+package io.macula.cam2me.reachability
 
 import android.content.Context
 import android.content.pm.PackageManager

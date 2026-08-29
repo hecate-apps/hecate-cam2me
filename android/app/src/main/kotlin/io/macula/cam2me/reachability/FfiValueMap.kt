@@ -1,4 +1,4 @@
-package io.macula.cam2me.mesh
+package io.macula.cam2me.reachability
 
 import io.macula.sdk.FfiMapEntry
 import io.macula.sdk.FfiValue
