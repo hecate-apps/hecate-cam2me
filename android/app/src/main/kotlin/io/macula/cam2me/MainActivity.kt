@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import io.crates.keyring.ensureAndroidNativeKeyringStoreInitialized
 import io.macula.sdk.FfiKeyPair
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
@@ -46,6 +47,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+
+        // Required once, before any FfiKeyPair keystore method runs on
+        // Android -- see Keyring's own doc for why.
+        ensureAndroidNativeKeyringStoreInitialized(applicationContext)
 
         var isReady by mutableStateOf(false)
         splashScreen.setKeepOnScreenCondition { !isReady }
