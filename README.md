@@ -1,7 +1,7 @@
 # macula-cam2me
 
 Native Android + iOS apps that stream a phone's camera over the [macula
-mesh](https://github.com/macula-io/macula-rust-sdk) — pull-model: other
+mesh](https://github.com/macula-io/macula-rust) — pull-model: other
 mesh participants dial into the phone via a macula-station it's
 connected to, not the other way around. Identity, presence, contacts,
 and station connectivity (including nearest-station auto-discovery) are
@@ -13,23 +13,38 @@ Two separate native apps, sharing nothing but the Rust core:
 
 ```
 macula-cam2me/
-├── rust/macula-rust-sdk/     # git submodule -> macula-io/macula-rust-sdk
+├── rust/cam2me-ffi/          # this app's own top-level build target,
+│                              # depends on macula-rust-ffi (crates.io)
 ├── android/                  # Kotlin, Gradle, generated bindings via JNA
 ├── ios/                      # Swift, XcodeGen, generated bindings via XCFramework
 └── scripts/                  # cross-compile the Rust core + regenerate bindings
 ```
 
-No Flutter, no Kotlin Multiplatform. Both `macula-rust-sdk-ffi`'s Kotlin
-and Swift bindings already exist and are already verified (generated,
-inspected, and CI-checked in `macula-rust-sdk` itself); this repo just
+No Flutter, no Kotlin Multiplatform. Both `macula-rust-ffi`'s Kotlin and
+Swift bindings already exist and are already verified (generated,
+inspected, and CI-checked in `macula-rust` itself); this repo just
 consumes them, once per platform, the same way `iroh-ffi`'s own example
 apps consume `iroh`.
 
+`macula-rust-ffi` is consumed as a real `crates.io` dependency (`rust/
+cam2me-ffi/Cargo.toml`), not a git submodule — this repo no longer has
+any submodules. `rust/cam2me-ffi` exists only because an otherwise-empty
+crate that merely depends on `macula-rust-ffi` gets its whole dependency
+silently dropped at link time (the linker treats an unreferenced
+dependency as dead code, `#[no_mangle] extern "C"` doesn't save it); see
+the doc comment on `rust/cam2me-ffi/src/lib.rs`'s `pub use` line for the
+verified fix. Its own `[lib] name` is deliberately `cam2me_ffi`, not
+`macula_rust_ffi` (that would collide with `macula-rust-ffi`'s own `[lib]
+name` at the Cargo level) — `scripts/build-rust-*.sh` rename the final
+build artifact to the `macula_rust_ffi` name the generated bindings
+actually expect at runtime. See that crate's `Cargo.toml` for the full
+reasoning.
+
 Neither app links against a prebuilt binary. `scripts/build-rust-*.sh`
-cross-compile `macula-rust-sdk-ffi` from the pinned submodule commit and
-regenerate the Kotlin/Swift source fresh every time — nothing FFI-shaped
-is committed to this repo, matching `macula-rust-sdk`'s own "don't
-commit generated code" convention.
+cross-compile `cam2me-ffi` (pulling in `macula-rust-ffi` at its pinned
+crates.io version) and regenerate the Kotlin/Swift source fresh every
+time — nothing FFI-shaped is committed to this repo, matching
+`macula-rust`'s own "don't commit generated code" convention.
 
 ## Building
 
@@ -89,7 +104,8 @@ that's the next pass, on both platforms.
 
 ## See also
 
-- [macula-io/macula-rust-sdk](https://github.com/macula-io/macula-rust-sdk) —
-  the Rust core + UniFFI bindings this repo consumes. Its
+- [macula-io/macula-rust](https://github.com/macula-io/macula-rust) —
+  the Rust core + UniFFI bindings this repo consumes, published on
+  crates.io as `macula-rust` / `macula-rust-ffi`. Its
   `plans/PLAN_WIRE_PROTOCOL.md` §13 covers the streaming RPC provider
   role this app will use to answer inbound viewers.

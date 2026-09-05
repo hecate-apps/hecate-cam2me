@@ -11,17 +11,15 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: rust/macula-rust-sdk
+          workspaces: rust/cam2me-ffi
 
-      - name: Build macula-rust-sdk-ffi for iOS + regenerate Swift bindings + XCFramework
+      - name: Build cam2me-ffi for iOS + regenerate Swift bindings + XCFramework
         run: ./scripts/build-rust-ios.sh
 
       - name: Install XcodeGen

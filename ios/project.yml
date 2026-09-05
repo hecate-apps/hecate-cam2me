@@ -27,6 +27,6 @@ targets:
       # committed -- a build artifact, regenerated locally or in CI
       # before this target ever compiles, same as the Kotlin side's
       # jniLibs.
-      - framework: MaculaRustSdkFFI.xcframework
+      - framework: MaculaRustFFI.xcframework
         embed: true
         codeSign: true

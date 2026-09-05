@@ -11,15 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: rust/macula-rust-sdk
+          workspaces: rust/cam2me-ffi
 
       - uses: nttld/setup-ndk@v1
         id: ndk
@@ -27,7 +25,7 @@ jobs:
           ndk-version: r27c
       - run: cargo install cargo-ndk --locked
 
-      - name: Build macula-rust-sdk-ffi for Android + regenerate Kotlin bindings
+      - name: Build cam2me-ffi for Android + regenerate Kotlin bindings
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
         run: ./scripts/build-rust-android.sh

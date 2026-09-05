@@ -1,0 +1,50 @@
+[package]
+name = "cam2me-ffi"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "cam2me's own top-level build target for macula-rust-ffi. See src/lib.rs."
+
+[lib]
+# NOT "macula_rust_ffi": macula-rust-ffi's own [lib] name already IS
+# "macula_rust_ffi", and giving this crate the identical [lib] name
+# produces a real (if currently soft) "output filename collision"
+# warning from Cargo -- both crates' compiled units land in
+# target/*/deps/ under the same bare name, and cargo says this "may
+# become a hard error in the future". Verified: the FINAL top-level
+# artifact (target/release/libmacula_rust_ffi.so) was still correct
+# despite the warning (237 defined symbols, matching a direct build
+# exactly) -- but a warning cargo itself flags as future-breaking isn't
+# something to leave in place just because it happens to work today.
+#
+# macula-rust-ffi's own uniffi.toml pins cdylib_name = "macula_rust_ffi"
+# for both the Kotlin and Swift bindings it generates -- that name gets
+# baked into the GENERATED bindings themselves (what library name they
+# call System.loadLibrary/dlopen for at runtime), independent of what
+# this crate's own build artifact happens to be named. So the actual
+# requirement is only on the FINAL file bundled into the app (jniLibs/
+# on Android, the XCFramework on iOS) -- see scripts/build-rust-*.sh,
+# which rename libcam2me_ffi.so/.a to libmacula_rust_ffi.so/.a as an
+# explicit copy step, same shape as those scripts already did for the
+# old submodule's differently-named build output.
+name = "cam2me_ffi"
+crate-type = ["cdylib", "staticlib"]
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "uniffi-bindgen.rs"
+
+[dependencies]
+# Real crates.io dependency, not a git submodule -- see this repo's own
+# README for why (Raf: "cam2me should not have submodules"). Loose
+# constraint per this org's own dep-hygiene convention; Cargo.lock IS
+# committed for this crate specifically (see .gitignore at the repo
+# root) -- cam2me is an application, not a library, so pinning exactly
+# what was built and tested is the right call here, the opposite of
+# macula-rust/macula-rust-ffi's own "don't commit the lock" policy for
+# themselves.
+macula-rust-ffi = "0.3"
+# Needed for the uniffi-bindgen bin target below (uniffi_bindgen_main);
+# no standalone uniffi-bindgen-cli exists on crates.io to lean on
+# instead (checked before adding this).
+uniffi = { version = "0.32", features = ["cli"] }

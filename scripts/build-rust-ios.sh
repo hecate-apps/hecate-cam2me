@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# Cross-compiles macula-rust-sdk-ffi for iOS (device + simulator, both
-# architectures), packages an XCFramework, regenerates the Swift
-# bindings, and copies both into the Xcode project.
+# Cross-compiles cam2me-ffi (cam2me's own top-level build target for
+# macula-rust-ffi -- see rust/cam2me-ffi/src/lib.rs for why that
+# indirection exists) for iOS (device + simulator, both architectures),
+# packages an XCFramework, regenerates the Swift bindings, and copies
+# both into the Xcode project.
 #
 # Requires: macOS with Xcode (for `xcodebuild -create-xcframework`), and
 # the iOS Rust targets (`rustup target add aarch64-apple-ios
@@ -9,22 +11,32 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FFI_CRATE_DIR="$REPO_ROOT/rust/macula-rust-sdk"
+FFI_CRATE_DIR="$REPO_ROOT/rust/cam2me-ffi"
 SWIFT_OUT_DIR="$REPO_ROOT/ios/MaculaCam2Me/ffi"
-XCFRAMEWORK_OUT="$REPO_ROOT/ios/MaculaRustSdkFFI.xcframework"
-LIB_NAME="libmacula_rust_sdk_ffi.a"
+XCFRAMEWORK_OUT="$REPO_ROOT/ios/MaculaRustFFI.xcframework"
+# cam2me-ffi's own [lib] name is "cam2me_ffi", NOT "macula_rust_ffi" --
+# giving it the identical name to macula-rust-ffi's own [lib] triggers a
+# real Cargo "output filename collision" warning (see rust/cam2me-ffi/
+# Cargo.toml for the full explanation). Unlike Android's jniLibs (where
+# Kotlin's System.loadLibrary("macula_rust_ffi") does a runtime
+# dlopen-by-name and the .so MUST be renamed -- see build-rust-android.sh),
+# no rename is needed here: verified the generated Swift modulemap has no
+# `link` directive (just `module macula_rust_ffiFFI { header ...;
+# export * }`), so Xcode links whatever static lib is packaged into the
+# XCFramework directly, not by string-matching a library name.
+LIB_NAME="libcam2me_ffi.a"
 
 if [[ "$(uname)" != "Darwin" ]]; then
     echo "This script must run on macOS (xcodebuild -create-xcframework is Apple-only)." >&2
     exit 1
 fi
 
-echo "==> Building macula-rust-sdk-ffi for iOS device + simulator"
+echo "==> Building cam2me-ffi for iOS device + simulator"
 (
     cd "$FFI_CRATE_DIR"
-    cargo build --release -p macula-rust-sdk-ffi --target aarch64-apple-ios
-    cargo build --release -p macula-rust-sdk-ffi --target aarch64-apple-ios-sim
-    cargo build --release -p macula-rust-sdk-ffi --target x86_64-apple-ios
+    cargo build --release --target aarch64-apple-ios
+    cargo build --release --target aarch64-apple-ios-sim
+    cargo build --release --target x86_64-apple-ios
 )
 
 TARGET_DIR="$FFI_CRATE_DIR/target"
@@ -42,7 +54,7 @@ rm -rf "$SWIFT_OUT_DIR"
 mkdir -p "$SWIFT_OUT_DIR"
 (
     cd "$FFI_CRATE_DIR"
-    cargo run -p macula-rust-sdk-ffi --release --bin uniffi-bindgen -- generate \
+    cargo run --release --bin uniffi-bindgen -- generate \
         --library "$TARGET_DIR/aarch64-apple-ios/release/$LIB_NAME" \
         --language swift \
         --out-dir "$SWIFT_OUT_DIR" \
